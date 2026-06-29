@@ -13,6 +13,11 @@ export default function LandingPage() {
   const [quality, setQuality] = useState('1080');
   const [audioFormat, setAudioFormat] = useState('mp3');
   
+  // Playlist video listing states
+  const [playlistInfo, setPlaylistInfo] = useState(null);
+  const [fetchingInfo, setFetchingInfo] = useState(false);
+  const [selectedIndices, setSelectedIndices] = useState([]);
+
   // WebSocket and Progress states
   const [socket, setSocket] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -20,6 +25,12 @@ export default function LandingPage() {
   const [downloadStatus, setDownloadStatus] = useState(null); // status, filename, currentItem, totalItems, message
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Clear playlist/channel list whenever URL or downloadType changes
+  useEffect(() => {
+    setPlaylistInfo(null);
+    setSelectedIndices([]);
+  }, [url, downloadType]);
 
   // 1. WebSocket setup & canvas animations
   useEffect(() => {
@@ -55,6 +66,7 @@ export default function LandingPage() {
       setProgressData(null);
       setDownloadStatus(null);
       setUrl(''); // clear input on success
+      setPlaylistInfo(null); // clear preview
     });
 
     socketClient.on('download-error', (data) => {
@@ -216,6 +228,52 @@ export default function LandingPage() {
     }
   };
 
+  // Fetch all videos for checkable playlist/channel preview
+  const fetchPlaylistDetails = async () => {
+    setError('');
+    setSuccess('');
+    setPlaylistInfo(null);
+    setSelectedIndices([]);
+
+    if (!url.trim()) {
+      setError('Please enter a valid URL first.');
+      return;
+    }
+
+    try {
+      new URL(url);
+    } catch (_) {
+      setError('Please enter a valid HTTP/HTTPS URL.');
+      return;
+    }
+
+    setFetchingInfo(true);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/download/playlist-info`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to fetch playlist contents.');
+      }
+
+      setPlaylistInfo(data);
+      // Select all indices by default
+      setSelectedIndices(data.entries.map((e) => e.index));
+    } catch (err) {
+      setError(err.message || 'Unable to fetch playlist contents.');
+    } finally {
+      setFetchingInfo(false);
+    }
+  };
+
   const startDownload = async (e) => {
     e.preventDefault();
     setError('');
@@ -228,12 +286,19 @@ export default function LandingPage() {
       return;
     }
 
-    // Simple URL validation
     try {
       new URL(url);
     } catch (_) {
       setError('Please enter a valid HTTP/HTTPS URL.');
       return;
+    }
+
+    // Verify selection exists if a list is loaded
+    if (playlistInfo && (downloadType === 'playlist' || downloadType === 'channel')) {
+      if (selectedIndices.length === 0) {
+        setError('Please select at least one video to extract.');
+        return;
+      }
     }
 
     setIsDownloading(true);
@@ -247,6 +312,11 @@ export default function LandingPage() {
       payload.format = audioFormat;
     } else {
       payload.quality = quality;
+    }
+
+    // Pass custom index filters if a preview is loaded
+    if (playlistInfo && (downloadType === 'playlist' || downloadType === 'channel')) {
+      payload.selectedItems = selectedIndices.sort((a, b) => a - b).join(',');
     }
 
     try {
@@ -410,7 +480,102 @@ export default function LandingPage() {
                     }
                     className="bg-transparent border-none focus:ring-0 text-white w-full font-body-md placeholder:text-outline-variant outline-none py-2 text-[15px]"
                   />
+                  {(downloadType === 'playlist' || downloadType === 'channel') && (
+                    <button
+                      type="button"
+                      disabled={fetchingInfo || isDownloading || !url}
+                      onClick={fetchPlaylistDetails}
+                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-label-md text-label-md transition-all flex items-center gap-1.5 cursor-pointer mr-2 border border-white/10 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {fetchingInfo ? (
+                        <>
+                          <span className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                          <span>Parsing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-[18px]">list_alt</span>
+                          <span>Fetch List</span>
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
+
+                {/* Playlist Checklist UI */}
+                {playlistInfo && (downloadType === 'playlist' || downloadType === 'channel') && (
+                  <div className="bg-surface-container-low/80 rounded-xl border border-white/10 p-4 flex flex-col gap-3 max-h-80 relative animate-[fadeIn_0.3s_ease-out]">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
+                      <span className="text-white font-medium text-[14px] sm:text-[15px] flex items-center gap-2">
+                        <span className="material-symbols-outlined text-neon-blue text-[20px]">playlist_play</span>
+                        <span className="line-clamp-1">{playlistInfo.title}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedIndices.length === playlistInfo.entries.length) {
+                            setSelectedIndices([]);
+                          } else {
+                            setSelectedIndices(playlistInfo.entries.map((e) => e.index));
+                          }
+                        }}
+                        className="text-neon-blue hover:text-aurora-cyan text-[12px] font-label-md cursor-pointer transition-colors"
+                      >
+                        {selectedIndices.length === playlistInfo.entries.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                    </div>
+                    
+                    {/* Scrollable checklists */}
+                    <div className="overflow-y-auto pr-1 flex flex-col gap-2 max-h-48 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                      {playlistInfo.entries.map((video) => {
+                        const isChecked = selectedIndices.includes(video.index);
+                        return (
+                          <label 
+                            key={video.index} 
+                            className="flex items-start gap-3 hover:bg-white/5 p-2 rounded-lg cursor-pointer transition-colors group/item"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setSelectedIndices(selectedIndices.filter((i) => i !== video.index));
+                                } else {
+                                  setSelectedIndices([...selectedIndices, video.index]);
+                                }
+                              }}
+                              className="mt-0.5 rounded border-white/20 bg-transparent text-neon-blue focus:ring-neon-blue focus:ring-offset-background cursor-pointer"
+                            />
+                            {video.thumbnail && (
+                              <img 
+                                src={video.thumbnail} 
+                                alt="" 
+                                className="w-16 h-10 object-cover rounded bg-white/5 border border-white/10 shrink-0 mt-0.5"
+                                loading="lazy"
+                              />
+                            )}
+                            <div className="flex flex-col gap-0.5">
+                              <span className={`text-[13px] sm:text-[14px] leading-snug ${isChecked ? 'text-white' : 'text-on-surface-variant group-hover/item:text-on-surface'} transition-colors`}>
+                                {video.title}
+                              </span>
+                              <span className="text-[10px] text-outline-variant">
+                                Playlist Index: {video.index}
+                              </span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    
+                    {/* Totals metadata */}
+                    <div className="flex justify-between items-center text-[12px] text-on-surface-variant border-t border-white/10 pt-2.5">
+                      <span>Total Selected:</span>
+                      <span className="text-white font-semibold tabular-nums">
+                        {selectedIndices.length} / {playlistInfo.entries.length} videos
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Conditional Parameter Selectors */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -443,7 +608,7 @@ export default function LandingPage() {
                       <select
                         disabled={isDownloading}
                         value={audioFormat}
-                        onChange={(e) => setAudioFormat(e.target.value)}
+                        onChange={(e) => setQuality(e.target.value)}
                         className="bg-surface-container-low/80 text-white rounded-xl border border-white/10 p-3 font-body-md outline-none focus:border-neon-blue/50"
                       >
                         <option value="mp3">MP3 (Universal compatibility)</option>

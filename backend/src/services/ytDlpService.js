@@ -162,40 +162,109 @@ export const startAudioDownload = async (url, format = 'mp3', socketId, io) => {
 };
 
 /**
- * Download an entire playlist.
+ * Fetch flat playlist/channel metadata (video title, index, id, url).
  */
-export const startPlaylistDownload = async (url, quality = '1080', socketId, io) => {
+export const fetchPlaylistInfo = (url) => {
+  return new Promise((resolve, reject) => {
+    console.log(`[Service] Fetching playlist metadata for: ${url}`);
+    
+    const child = spawn('yt-dlp', [
+      '--dump-single-json',
+      '--flat-playlist',
+      url
+    ]);
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    child.stdout.on('data', (chunk) => {
+      stdoutData += chunk.toString();
+    });
+
+    child.stderr.on('data', (chunk) => {
+      stderrData += chunk.toString();
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const parsed = JSON.parse(stdoutData);
+          const title = parsed.title || 'Playlist / Channel';
+          
+          const entries = (parsed.entries || []).map((entry, index) => {
+            let thumbnail = '';
+            if (entry.thumbnail) {
+              thumbnail = entry.thumbnail;
+            } else if (entry.thumbnails && entry.thumbnails.length > 0) {
+              thumbnail = entry.thumbnails[0].url;
+            }
+            
+            return {
+              id: entry.id,
+              title: entry.title || `Video ${index + 1}`,
+              url: entry.url || (entry.id ? `https://www.youtube.com/watch?v=${entry.id}` : ''),
+              index: entry.playlist_index || (index + 1),
+              thumbnail
+            };
+          });
+
+          resolve({ title, entries });
+        } catch (err) {
+          reject(new Error(`Failed to parse playlist metadata JSON: ${err.message}`));
+        }
+      } else {
+        console.error(`[Service] yt-dlp metadata extraction stderr: ${stderrData}`);
+        reject(new Error(`yt-dlp failed to fetch playlist info (exit code ${code}).`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+  });
+};
+
+/**
+ * Download an entire or filtered playlist.
+ */
+export const startPlaylistDownload = async (url, quality = '1080', socketId, io, selectedItems = '') => {
   const heightLimit = parseInt(quality, 10) || 1080;
   const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
-  
-  // Save in a folder named after the playlist, prepending index to title
   const outputPattern = path.join(DOWNLOAD_DIR, '%(playlist)s', '%(playlist_index)s - %(title)s.%(ext)s');
 
   const args = [
     '-f', formatStr,
     '-o', outputPattern,
-    '--yes-playlist',
-    url
+    '--yes-playlist'
   ];
+
+  if (selectedItems) {
+    args.push('--playlist-items', selectedItems);
+  }
+
+  args.push(url);
 
   return runYtDlp(args, socketId, io, 'playlist');
 };
 
 /**
- * Download all videos from a channel.
+ * Download all or filtered videos from a channel.
  */
-export const startChannelDownload = async (url, quality = '1080', socketId, io) => {
+export const startChannelDownload = async (url, quality = '1080', socketId, io, selectedItems = '') => {
   const heightLimit = parseInt(quality, 10) || 1080;
   const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
-  
-  // Save in a folder named after the channel/uploader
   const outputPattern = path.join(DOWNLOAD_DIR, '%(channel)s', '%(title)s.%(ext)s');
 
   const args = [
     '-f', formatStr,
-    '-o', outputPattern,
-    url
+    '-o', outputPattern
   ];
+
+  if (selectedItems) {
+    args.push('--playlist-items', selectedItems);
+  }
+
+  args.push(url);
 
   return runYtDlp(args, socketId, io, 'channel');
 };
