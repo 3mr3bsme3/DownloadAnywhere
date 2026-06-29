@@ -1,0 +1,462 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>AlgoTube Pro | High-Performance Video Extraction</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Geist:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#87929a",
+                        "on-secondary": "#490080",
+                        "on-tertiary-fixed-variant": "#004e5a",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "outline-variant": "#3e484f",
+                        "on-secondary-container": "#d6a9ff",
+                        "surface-bright": "#31394d",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "tertiary-container": "#00c3dd",
+                        "tertiary": "#3ce0fb",
+                        "electric-purple": "#A855F7",
+                        "background": "#0b1326",
+                        "primary-fixed": "#c4e7ff",
+                        "on-primary-fixed-variant": "#004c69",
+                        "on-tertiary-fixed": "#001f25",
+                        "surface": "#0b1326",
+                        "on-error": "#690005",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#6f00be",
+                        "surface-container-lowest": "#060e20",
+                        "secondary": "#ddb7ff",
+                        "slate-900": "#0F172A",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed": "#a2eeff",
+                        "inverse-primary": "#00668a",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-fixed-dim": "#2fd9f4",
+                        "on-tertiary-container": "#004b56",
+                        "inverse-surface": "#dae2fd",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#7bd0ff",
+                        "surface-container-highest": "#2d3449",
+                        "primary-container": "#38bdf8",
+                        "surface-dim": "#0b1326",
+                        "secondary-fixed": "#f0dbff",
+                        "on-surface": "#dae2fd",
+                        "on-surface-variant": "#bdc8d1",
+                        "on-secondary-fixed": "#2c0051",
+                        "neon-blue": "#38BDF8",
+                        "on-primary": "#00354a",
+                        "on-primary-fixed": "#001e2c",
+                        "slate-800": "#1E293B",
+                        "on-tertiary": "#00363e",
+                        "error-container": "#93000a",
+                        "surface-variant": "#2d3449",
+                        "ghost-white": "#F8FAFC",
+                        "aurora-cyan": "#22D3EE",
+                        "inverse-on-surface": "#283044",
+                        "primary": "#8ed5ff",
+                        "on-primary-container": "#004965"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "base": "8px",
+                        "max-width": "1280px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Geist"],
+                        "headline-lg-mobile": ["Geist"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "mono-code": ["monospace"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "mono-code": ["13px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(11, 19, 38, 0.45);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+        .aurora-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.15) 0%, transparent 60%);
+        }
+        @keyframes pulse-neon-border {
+            0%, 100% { border-color: rgba(56, 189, 248, 0.2); box-shadow: 0 0 5px rgba(56, 189, 248, 0.1); }
+            50% { border-color: rgba(56, 189, 248, 0.8); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        }
+        .animate-neon-border {
+            animation: pulse-neon-border 3s infinite ease-in-out;
+        }
+        @keyframes float-rotate {
+            0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+            25% { transform: translateY(-15px) rotateX(2deg) rotateY(2deg); }
+            50% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+            75% { transform: translateY(10px) rotateX(-2deg) rotateY(-2deg); }
+        }
+        .animate-float-3d {
+            animation: float-rotate 8s infinite ease-in-out;
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .mouse-light {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            mix-blend-mode: screen;
+            transition: opacity 0.5s ease;
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-neon-blue/30 overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/40 backdrop-blur-xl border-b border-white/10 shadow-[0_0_20px_rgba(56,189,248,0.1)]">
+<div class="max-w-max-width mx-auto px-margin-desktop h-16 flex justify-between items-center">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold bg-gradient-to-r from-neon-blue to-aurora-cyan bg-clip-text text-transparent">AlgoTube Pro</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-body-md text-body-md text-neon-blue border-b-2 border-neon-blue pb-1" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Downloads</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Cloud Sync</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden lg:flex items-center gap-2 bg-gradient-to-r from-neon-blue to-aurora-cyan text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full hover:shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all">
+                    Upgrade to Pro
+                </button>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-neon-blue cursor-pointer transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-neon-blue cursor-pointer transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</div>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden px-margin-mobile md:px-margin-desktop" id="hero-section">
+<canvas id="hero-canvas" width="1280" height="921"></canvas>
+<div class="mouse-light" id="mouse-flashlight" style="left: 1273px; top: 766px; opacity: 0;"></div>
+<div class="absolute inset-0 z-0">
+<img alt="Cinematic background" class="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPJ5WvFd-CYUGdWytJl_h4xaZ9RrGBRuF04LjRY_m71kIuG_fmbLXO0jJCfHG3g_m4OiiaWP1eNcttihHq9--AkoMLFrqfEAMvJUcgIRz3AexwqKfDNRPbnKTNp3Yj92TEtAXQx0K7frJfp46_fU_t-m0BqrgK7z-jSVWQPmDEMbjOLk3gDsKnAMPWoXLXSq_8vw06QIrF2RFiFPl05xJGCNxgUPmqQInyJzLuMS4giM3JPom0T2MkOUIS6bzOgDaSBybzJtauu3A">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background"></div>
+</div>
+<div class="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto">
+<div class="mb-8 relative animate-float-3d">
+<img alt="AlgoTube Pro 3D Logo" class="w-64 md:w-80 h-auto drop-shadow-[0_0_50px_rgba(56,189,248,0.5)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMOaBLakzUSEtRPSCqINFiwgXL9qsaBU-TE7TTttfOxRMxW3zb444YYVq-kxV8mq4P8h_VXFttb3JCYO0zejFKS3gJdPa7xme5dOGPJZ-EG9R7cH2KEgQEh80RX3Opb4DF4c8t-0n1FWEr2ZGqOz7CVSyAAjiEYF6kiwkpGAlUMNxMuWok9kAcRRc_WNG7U_hnN3UE16LQIGpiaQBX2CIjcHEtuRZlfAtZdYNae0o_G-P23bJ5MJJ2j6Rn-ubSsLIEBgGaLZWVivceWg">
+</div>
+<h1 class="font-headline-xl text-headline-xl mb-6 text-white text-shadow-glow">
+                    Neural-Speed Media <span class="bg-gradient-to-r from-neon-blue to-electric-purple bg-clip-text text-transparent">Extraction</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-2xl">
+                    High-performance media pipeline designed for power users. Extract, synchronize, and archive video content across the cloud at light speed.
+                </p>
+<!-- Futuristic Input Field -->
+<div class="w-full max-w-2xl relative group">
+<div class="absolute -inset-1 bg-gradient-to-r from-neon-blue to-electric-purple rounded-xl opacity-20 group-focus-within:opacity-50 transition-opacity blur"></div>
+<div class="relative flex items-center bg-surface-container-low/60 backdrop-blur-2xl rounded-xl border border-white/10 p-2 pl-6 animate-neon-border transition-all">
+<span class="material-symbols-outlined text-neon-blue mr-3" data-icon="link">link</span>
+<input class="bg-transparent border-none focus:ring-0 text-white w-full font-body-md placeholder:text-outline-variant" placeholder="Paste your video URL here..." type="text">
+<button class="bg-neon-blue text-on-primary px-8 py-3 rounded-lg font-label-md text-label-md hover:bg-aurora-cyan transition-all flex items-center gap-2 relative overflow-hidden group/btn shadow-[0_0_10px_rgba(56,189,248,0.2)] hover:shadow-[0_0_20px_rgba(56,189,248,0.6)]" id="magnetic-download">
+<span class="relative z-10">Download</span>
+<span class="material-symbols-outlined text-[20px] relative z-10" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+</div>
+<div class="mt-8 flex gap-4 text-on-surface-variant font-label-md text-label-md">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-aurora-cyan text-[18px]" data-icon="check_circle">check_circle</span> No Ads</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-aurora-cyan text-[18px]" data-icon="check_circle">check_circle</span> 8K Resolution</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-aurora-cyan text-[18px]" data-icon="check_circle">check_circle</span> Multi-Threaded</span>
+</div>
+</div>
+</section>
+<!-- Stats Section (Bento Inspired) -->
+<section class="max-w-max-width mx-auto px-margin-desktop py-gutter">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="glass-panel p-8 rounded-2xl flex flex-col justify-center items-center text-center reveal active">
+<span class="text-on-surface-variant font-label-md text-label-md mb-2">NETWORK THROUGHPUT</span>
+<div class="text-headline-lg font-headline-lg text-neon-blue">1.2 Gbps</div>
+<div class="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-gradient-to-r from-neon-blue to-aurora-cyan w-[85%]"></div>
+</div>
+</div>
+<div class="glass-panel p-8 rounded-2xl flex flex-col justify-center items-center text-center reveal active">
+<span class="text-on-surface-variant font-label-md text-label-md mb-2">TOTAL EXTRACTED</span>
+<div class="text-headline-lg font-headline-lg text-white">4.8 PB</div>
+<span class="text-electric-purple font-body-sm text-body-sm mt-2">+240 TB this week</span>
+</div>
+<div class="glass-panel p-8 rounded-2xl flex flex-col justify-center items-center text-center reveal active">
+<span class="text-on-surface-variant font-label-md text-label-md mb-2">NODES ONLINE</span>
+<div class="text-headline-lg font-headline-lg text-aurora-cyan">142,000+</div>
+<div class="flex gap-1 mt-4">
+<div class="w-2 h-2 rounded-full bg-aurora-cyan animate-pulse"></div>
+<div class="w-2 h-2 rounded-full bg-aurora-cyan animate-pulse delay-75"></div>
+<div class="w-2 h-2 rounded-full bg-aurora-cyan animate-pulse delay-150"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Grid -->
+<section class="max-w-max-width mx-auto px-margin-desktop py-24">
+<div class="text-center mb-16">
+<h2 class="font-headline-lg text-headline-lg text-white mb-4">Core Capabilities</h2>
+<div class="h-1 w-24 bg-gradient-to-r from-neon-blue to-transparent mx-auto"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Feature 1 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group reveal active">
+<div class="w-12 h-12 rounded-xl bg-neon-blue/10 flex items-center justify-center mb-6 border border-neon-blue/20 group-hover:bg-neon-blue/20 transition-colors">
+<span class="material-symbols-outlined text-neon-blue" data-icon="video_file">video_file</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">8K Video Download</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Precision extraction of ultra-high definition content with zero metadata loss.</p>
+</div>
+<!-- Feature 2 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group reveal active">
+<div class="w-12 h-12 rounded-xl bg-electric-purple/10 flex items-center justify-center mb-6 border border-electric-purple/20 group-hover:bg-electric-purple/20 transition-colors">
+<span class="material-symbols-outlined text-electric-purple" data-icon="audio_file">audio_file</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">Lossless Audio</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Extract studio-quality audio in FLAC or WAV formats directly from the stream.</p>
+</div>
+<!-- Feature 3 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group reveal active">
+<div class="w-12 h-12 rounded-xl bg-aurora-cyan/10 flex items-center justify-center mb-6 border border-aurora-cyan/20 group-hover:bg-aurora-cyan/20 transition-colors">
+<span class="material-symbols-outlined text-aurora-cyan" data-icon="playlist_play">playlist_play</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">Smart Playlist</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Sync entire channels and playlists with automatic incremental updates.</p>
+</div>
+<!-- Feature 4 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group reveal active">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 border border-primary/20 group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="dynamic_feed">dynamic_feed</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">Channel Archiving</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Maintain a localized backup of your favorite creators' historical content.</p>
+</div>
+<!-- Feature 5 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group reveal active">
+<div class="w-12 h-12 rounded-xl bg-tertiary/10 flex items-center justify-center mb-6 border border-tertiary/20 group-hover:bg-tertiary/20 transition-colors">
+<span class="material-symbols-outlined text-tertiary" data-icon="rocket_launch">rocket_launch</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">Multi-Threaded Speed</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Parallel processing engine that saturates even 10Gbps fiber connections.</p>
+</div>
+<!-- Feature 6 -->
+<div class="glass-panel p-8 rounded-2xl hover:translate-y-[-8px] transition-all duration-300 group border-neon-blue/30 reveal active">
+<div class="w-12 h-12 rounded-xl bg-neon-blue/20 flex items-center justify-center mb-6 border border-neon-blue/40 group-hover:bg-neon-blue/30 transition-colors">
+<span class="material-symbols-outlined text-neon-blue" data-icon="layers">layers</span>
+</div>
+<h3 class="font-headline-lg text-[20px] text-white mb-3">Batch Processing</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Queue hundreds of media items and let our neural engine handle the priority.</p>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="max-w-max-width mx-auto px-margin-desktop mb-24">
+<div class="relative glass-panel rounded-3xl p-12 md:p-20 overflow-hidden text-center reveal active">
+<div class="absolute inset-0 aurora-gradient -z-10"></div>
+<h2 class="font-headline-xl text-headline-xl md:text-[64px] text-white mb-8">Ready to go <span class="text-neon-blue italic">Pro</span>?</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">Join over 1M creators and data archivists who trust AlgoTube Pro for their media pipeline.</p>
+<div class="flex flex-col md:flex-row justify-center gap-4">
+<button class="bg-white text-background px-12 py-5 rounded-full font-label-md text-label-md hover:shadow-xl transition-all font-bold">Get Started Free</button>
+<button class="border border-white/20 text-white px-12 py-5 rounded-full font-label-md text-label-md hover:bg-white/5 backdrop-blur-md transition-all">View Pricing Plans</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 mt-auto bg-surface-container-lowest border-t border-white/5">
+<div class="max-w-max-width mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="font-label-md text-label-md text-neon-blue">AlgoTube Pro</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 AlgoTube Pro. Neural-Link Enabled.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-aurora-cyan transition-colors" href="#">Terms of Service</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-aurora-cyan transition-colors" href="#">Privacy Protocol</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-aurora-cyan transition-colors" href="#">API Status</a>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:text-neon-blue cursor-pointer transition-colors">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path></svg>
+</div>
+<div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:text-neon-blue cursor-pointer transition-colors">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.042-1.416-4.042-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+</div>
+</div>
+</div>
+</footer>
+<script>
+        // Particle System
+        const canvas = document.getElementById('hero-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = document.getElementById('hero-section').offsetHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(56, 189, 248, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // Mouse Following Light
+        const flashlight = document.getElementById('mouse-flashlight');
+        const heroSection = document.getElementById('hero-section');
+        
+        heroSection.addEventListener('mousemove', (e) => {
+            const rect = heroSection.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            flashlight.style.left = `${x}px`;
+            flashlight.style.top = `${y}px`;
+            flashlight.style.opacity = '1';
+        });
+
+        heroSection.addEventListener('mouseleave', () => {
+            flashlight.style.opacity = '0';
+        });
+
+        // Magnetic Button Effect
+        const magButton = document.getElementById('magnetic-download');
+        magButton.addEventListener('mousemove', (e) => {
+            const rect = magButton.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            magButton.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+        magButton.addEventListener('mouseleave', () => {
+            magButton.style.transform = `translate(0px, 0px)`;
+        });
+
+        // Scroll Reveal Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Smooth scroll interaction
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+
+
+</body></html>
