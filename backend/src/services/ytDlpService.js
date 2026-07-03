@@ -5,14 +5,47 @@ import { parseProgress } from '../utils/progressParser.js';
 const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || 'C:\\Users\\ASUS GAMING\\Downloads';
 
 /**
+ * Normalizes YouTube channel URLs to target the '/videos' tab,
+ * ensuring yt-dlp lists actual videos instead of tab names.
+ */
+export const normalizeChannelUrl = (urlStr) => {
+  try {
+    const url = new URL(urlStr);
+    if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+      const pathParts = url.pathname.split('/').filter(Boolean);
+      
+      // Check if it's a channel format: @username, channel/ID, c/Name, user/Name
+      const isChannel = 
+        pathParts[0]?.startsWith('@') ||
+        pathParts[0] === 'channel' ||
+        pathParts[0] === 'c' ||
+        pathParts[0] === 'user';
+        
+      if (isChannel) {
+        const lastPart = pathParts[pathParts.length - 1];
+        const tabs = ['videos', 'shorts', 'streams', 'featured', 'playlists', 'live'];
+        if (!tabs.includes(lastPart.toLowerCase())) {
+          url.pathname = '/' + [...pathParts, 'videos'].join('/');
+          return url.toString();
+        }
+      }
+    }
+  } catch (e) {
+    // Return original url on error
+  }
+  return urlStr;
+};
+
+/**
  * Core helper to run yt-dlp using child_process.spawn.
  * Feeds stdout and stderr streams into progress parser and sends events via Socket.IO.
  */
 const runYtDlp = (args, socketId, io, jobType) => {
   return new Promise((resolve, reject) => {
-    console.log(`[Service] Spawning: yt-dlp ${args.join(' ')}`);
+    const finalArgs = ['--js-runtimes', 'node', ...args];
+    console.log(`[Service] Spawning: yt-dlp ${finalArgs.join(' ')}`);
     
-    const child = spawn('yt-dlp', args);
+    const child = spawn('yt-dlp', finalArgs, { env: process.env });
     let currentFilename = '';
     let stdoutBuffer = '';
     let stderrBuffer = '';
@@ -165,14 +198,16 @@ export const startAudioDownload = async (url, format = 'mp3', socketId, io) => {
  * Fetch flat playlist/channel metadata (video title, index, id, url).
  */
 export const fetchPlaylistInfo = (url) => {
+  const targetUrl = normalizeChannelUrl(url);
   return new Promise((resolve, reject) => {
-    console.log(`[Service] Fetching playlist metadata for: ${url}`);
+    console.log(`[Service] Fetching playlist metadata for: ${targetUrl}`);
     
     const child = spawn('yt-dlp', [
+      '--js-runtimes', 'node',
       '--dump-single-json',
       '--flat-playlist',
-      url
-    ]);
+      targetUrl
+    ], { env: process.env });
 
     let stdoutData = '';
     let stderrData = '';
@@ -225,18 +260,36 @@ export const fetchPlaylistInfo = (url) => {
 };
 
 /**
- * Download an entire or filtered playlist.
+ * Download an entire or filtered playlist (Video or Audio).
  */
-export const startPlaylistDownload = async (url, quality = '1080', socketId, io, selectedItems = '') => {
-  const heightLimit = parseInt(quality, 10) || 1080;
-  const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+export const startPlaylistDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '') => {
   const outputPattern = path.join(DOWNLOAD_DIR, '%(playlist)s', '%(playlist_index)s - %(title)s.%(ext)s');
+  let args = [];
 
-  const args = [
-    '-f', formatStr,
-    '-o', outputPattern,
-    '--yes-playlist'
-  ];
+  if (downloadMode === 'audio') {
+    const audioFormat = format.toLowerCase();
+    const formatsSupportingThumbnail = ['mp3', 'm4a', 'flac', 'opus', 'alac'];
+    const shouldEmbed = formatsSupportingThumbnail.includes(audioFormat);
+
+    args = [
+      '-x',
+      '--audio-format', audioFormat,
+      '-o', outputPattern,
+      '--yes-playlist'
+    ];
+
+    if (shouldEmbed) {
+      args.push('--embed-thumbnail');
+    }
+  } else {
+    const heightLimit = parseInt(quality, 10) || 1080;
+    const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+    args = [
+      '-f', formatStr,
+      '-o', outputPattern,
+      '--yes-playlist'
+    ];
+  }
 
   if (selectedItems) {
     args.push('--playlist-items', selectedItems);
@@ -248,23 +301,41 @@ export const startPlaylistDownload = async (url, quality = '1080', socketId, io,
 };
 
 /**
- * Download all or filtered videos from a channel.
+ * Download all or filtered videos from a channel (Video or Audio).
  */
-export const startChannelDownload = async (url, quality = '1080', socketId, io, selectedItems = '') => {
-  const heightLimit = parseInt(quality, 10) || 1080;
-  const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+export const startChannelDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '') => {
+  const targetUrl = normalizeChannelUrl(url);
   const outputPattern = path.join(DOWNLOAD_DIR, '%(channel)s', '%(title)s.%(ext)s');
+  let args = [];
 
-  const args = [
-    '-f', formatStr,
-    '-o', outputPattern
-  ];
+  if (downloadMode === 'audio') {
+    const audioFormat = format.toLowerCase();
+    const formatsSupportingThumbnail = ['mp3', 'm4a', 'flac', 'opus', 'alac'];
+    const shouldEmbed = formatsSupportingThumbnail.includes(audioFormat);
+
+    args = [
+      '-x',
+      '--audio-format', audioFormat,
+      '-o', outputPattern
+    ];
+
+    if (shouldEmbed) {
+      args.push('--embed-thumbnail');
+    }
+  } else {
+    const heightLimit = parseInt(quality, 10) || 1080;
+    const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+    args = [
+      '-f', formatStr,
+      '-o', outputPattern
+    ];
+  }
 
   if (selectedItems) {
     args.push('--playlist-items', selectedItems);
   }
 
-  args.push(url);
+  args.push(targetUrl);
 
   return runYtDlp(args, socketId, io, 'channel');
 };

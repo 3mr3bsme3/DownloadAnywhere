@@ -12,11 +12,13 @@ export default function LandingPage() {
   const [downloadType, setDownloadType] = useState('video'); // video, audio, playlist, channel
   const [quality, setQuality] = useState('1080');
   const [audioFormat, setAudioFormat] = useState('mp3');
+  const [playlistMode, setPlaylistMode] = useState('video'); // video or audio
   
   // Playlist video listing states
   const [playlistInfo, setPlaylistInfo] = useState(null);
   const [fetchingInfo, setFetchingInfo] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
 
   // WebSocket and Progress states
   const [socket, setSocket] = useState(null);
@@ -30,6 +32,8 @@ export default function LandingPage() {
   useEffect(() => {
     setPlaylistInfo(null);
     setSelectedIndices([]);
+    setPlaylistMode('video');
+    setCurrentQueueIndex(0);
   }, [url, downloadType]);
 
   // 1. WebSocket setup & canvas animations
@@ -48,6 +52,8 @@ export default function LandingPage() {
       setDownloadStatus(data);
       if (data.status === 'downloading') {
         setError('');
+      } else if (data.status === 'playlist-progress') {
+        setCurrentQueueIndex(data.currentItem - 1);
       }
     });
 
@@ -280,6 +286,7 @@ export default function LandingPage() {
     setSuccess('');
     setProgressData(null);
     setDownloadStatus(null);
+    setCurrentQueueIndex(0);
 
     if (!url.trim()) {
       setError('Please enter a valid URL.');
@@ -310,6 +317,13 @@ export default function LandingPage() {
 
     if (downloadType === 'audio') {
       payload.format = audioFormat;
+    } else if (downloadType === 'playlist' || downloadType === 'channel') {
+      payload.downloadMode = playlistMode;
+      if (playlistMode === 'audio') {
+        payload.format = audioFormat;
+      } else {
+        payload.quality = quality;
+      }
     } else {
       payload.quality = quality;
     }
@@ -351,7 +365,7 @@ export default function LandingPage() {
         <div className="max-w-max-width mx-auto px-margin-desktop h-16 flex justify-between items-center">
           <div className="flex items-center gap-8">
             <span className="font-headline-lg text-headline-lg font-bold bg-gradient-to-r from-neon-blue to-aurora-cyan bg-clip-text text-transparent">
-              AlgoTube Pro
+              AlgoTube
             </span>
             <div className="hidden md:flex gap-6 items-center">
               <a 
@@ -413,7 +427,7 @@ export default function LandingPage() {
           <div className="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto w-full">
             <div className="mb-4 relative animate-float-3d">
               <img 
-                alt="AlgoTube Pro 3D Logo" 
+                alt="AlgoTube 3D Logo" 
                 className="w-48 md:w-56 h-auto drop-shadow-[0_0_50px_rgba(56,189,248,0.5)]" 
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMOaBLakzUSEtRPSCqINFiwgXL9qsaBU-TE7TTttfOxRMxW3zb444YYVq-kxV8mq4P8h_VXFttb3JCYO0zejFKS3gJdPa7xme5dOGPJZ-EG9R7cH2KEgQEh80RX3Opb4DF4c8t-0n1FWEr2ZGqOz7CVSyAAjiEYF6kiwkpGAlUMNxMuWok9kAcRRc_WNG7U_hnN3UE16LQIGpiaQBX2CIjcHEtuRZlfAtZdYNae0o_G-P23bJ5MJJ2j6Rn-ubSsLIEBgGaLZWVivceWg"
               />
@@ -503,7 +517,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Playlist Checklist UI */}
-                {playlistInfo && (downloadType === 'playlist' || downloadType === 'channel') && (
+                {playlistInfo && !isDownloading && (downloadType === 'playlist' || downloadType === 'channel') && (
                   <div className="bg-surface-container-low/80 rounded-xl border border-white/10 p-4 flex flex-col gap-3 max-h-80 relative animate-[fadeIn_0.3s_ease-out]">
                     <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
                       <span className="text-white font-medium text-[14px] sm:text-[15px] flex items-center gap-2">
@@ -577,10 +591,157 @@ export default function LandingPage() {
                   </div>
                 )}
 
+                {/* Playlist Progress UI */}
+                {playlistInfo && isDownloading && (downloadType === 'playlist' || downloadType === 'channel') && (
+                  <div className="bg-surface-container-low/80 rounded-xl border border-white/10 p-4 flex flex-col gap-3 max-h-80 relative animate-[fadeIn_0.3s_ease-out]">
+                    <div className="flex justify-between items-center border-b border-white/10 pb-2.5">
+                      <span className="text-white font-medium text-[14px] sm:text-[15px] flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full border-2 border-neon-blue/20 border-t-neon-blue animate-spin shrink-0" />
+                        <span className="line-clamp-1">Processing: {playlistInfo.title}</span>
+                      </span>
+                      <span className="text-neon-blue font-semibold text-[13px] tabular-nums">
+                        {Math.min(currentQueueIndex + 1, selectedIndices.length)} / {selectedIndices.length}
+                      </span>
+                    </div>
+
+                    {/* Progress Checklist list */}
+                    <div className="overflow-y-auto pr-1 flex flex-col gap-2 max-h-48 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                      {playlistInfo.entries
+                        .filter((video) => selectedIndices.includes(video.index))
+                        .map((video, idx) => {
+                          let status = 'pending';
+                          let pct = 0;
+                          
+                          if (idx < currentQueueIndex) {
+                            status = 'success';
+                          } else if (idx === currentQueueIndex) {
+                            status = downloadStatus?.status === 'merging' ? 'merging' : 'downloading';
+                            pct = progressData?.percentage || 0;
+                          }
+                          
+                          if (error && idx === currentQueueIndex) {
+                            status = 'error';
+                          }
+
+                          return (
+                            <div 
+                              key={video.index} 
+                              className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                                status === 'downloading' || status === 'merging'
+                                  ? 'bg-neon-blue/10 border border-neon-blue/20' 
+                                  : 'bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {status === 'success' && (
+                                  <span className="material-symbols-outlined text-aurora-cyan text-[20px] shrink-0 font-bold">check_circle</span>
+                                )}
+                                {(status === 'downloading' || status === 'merging') && (
+                                  <span className="w-4 h-4 rounded-full border-2 border-neon-blue/20 border-t-neon-blue animate-spin shrink-0" />
+                                )}
+                                {status === 'pending' && (
+                                  <span className="material-symbols-outlined text-outline-variant text-[20px] shrink-0">hourglass_empty</span>
+                                )}
+                                {status === 'error' && (
+                                  <span className="material-symbols-outlined text-rose-500 text-[20px] shrink-0 font-bold">cancel</span>
+                                )}
+
+                                {video.thumbnail && (
+                                  <img 
+                                    src={video.thumbnail} 
+                                    alt="" 
+                                    className="w-12 h-8 object-cover rounded bg-white/5 border border-white/10 shrink-0"
+                                    loading="lazy"
+                                  />
+                                )}
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[13px] text-white font-medium truncate pr-2">
+                                    {video.title}
+                                  </span>
+                                  <span className="text-[10px] text-on-surface-variant">
+                                    {status === 'merging' 
+                                      ? 'Post-processing...' 
+                                      : status === 'downloading' 
+                                      ? `Downloading... ${progressData?.speed ? `(${progressData.speed})` : ''}` 
+                                      : status === 'success' 
+                                      ? 'Completed' 
+                                      : 'Pending'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {status === 'downloading' && (
+                                <span className="text-white text-[13px] font-semibold tabular-nums shrink-0">
+                                  {pct}%
+                                </span>
+                              )}
+                              {status === 'success' && (
+                                <span className="text-aurora-cyan text-[11px] font-medium shrink-0">Done</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    {/* Overall progress bar */}
+                    <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5">
+                      <div className="flex justify-between text-[12px] text-on-surface-variant">
+                        <span>Overall Progress:</span>
+                        <span className="text-white font-semibold">
+                          {Math.round(((currentQueueIndex + (progressData?.percentage || 0) / 100) / selectedIndices.length) * 100)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-neon-blue to-aurora-cyan transition-all duration-300 rounded-full"
+                          style={{ 
+                            width: `${((currentQueueIndex + (progressData?.percentage || 0) / 100) / selectedIndices.length) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Format Mode Toggle (shown for Playlist or Channel) */}
+                {(downloadType === 'playlist' || downloadType === 'channel') && (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-on-surface-variant text-[13px] font-label-md">DOWNLOAD FORMAT</label>
+                    <div className="grid grid-cols-2 gap-2 bg-surface-container-lowest/60 p-1.5 rounded-xl border border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => setPlaylistMode('video')}
+                        disabled={isDownloading}
+                        className={`py-2 rounded-lg text-label-md font-label-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          playlistMode === 'video'
+                            ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/30 shadow-[0_0_10px_rgba(56,189,248,0.15)]'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">movie</span>
+                        <span>Video</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPlaylistMode('audio')}
+                        disabled={isDownloading}
+                        className={`py-2 rounded-lg text-label-md font-label-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          playlistMode === 'audio'
+                            ? 'bg-neon-blue/20 text-neon-blue border border-neon-blue/30 shadow-[0_0_10px_rgba(56,189,248,0.15)]'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[18px]">music_note</span>
+                        <span>Audio</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Conditional Parameter Selectors */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Quality Selector (shown for Video, Playlist, Channel) */}
-                  {downloadType !== 'audio' && (
+                  {/* Quality Selector (shown for Video, or Playlist/Channel in Video mode) */}
+                  {(downloadType === 'video' || ((downloadType === 'playlist' || downloadType === 'channel') && playlistMode === 'video')) && (
                     <div className="flex flex-col gap-2">
                       <label className="text-on-surface-variant text-[13px] font-label-md">MAX QUALITY LIMIT</label>
                       <select
@@ -601,14 +762,14 @@ export default function LandingPage() {
                     </div>
                   )}
 
-                  {/* Format Selector (shown only for Audio) */}
-                  {downloadType === 'audio' && (
+                  {/* Format Selector (shown for Audio, or Playlist/Channel in Audio mode) */}
+                  {(downloadType === 'audio' || ((downloadType === 'playlist' || downloadType === 'channel') && playlistMode === 'audio')) && (
                     <div className="flex flex-col gap-2">
                       <label className="text-on-surface-variant text-[13px] font-label-md">AUDIO FORMAT</label>
                       <select
                         disabled={isDownloading}
                         value={audioFormat}
-                        onChange={(e) => setQuality(e.target.value)}
+                        onChange={(e) => setAudioFormat(e.target.value)}
                         className="bg-surface-container-low/80 text-white rounded-xl border border-white/10 p-3 font-body-md outline-none focus:border-neon-blue/50"
                       >
                         <option value="mp3">MP3 (Universal compatibility)</option>
@@ -655,7 +816,7 @@ export default function LandingPage() {
               )}
 
               {/* Live Progress Panel */}
-              {isDownloading && (downloadStatus || progressData) && (
+              {isDownloading && (downloadType === 'video' || downloadType === 'audio') && (downloadStatus || progressData) && (
                 <div className="mt-6 p-4 bg-surface-container-lowest/80 border border-white/5 rounded-xl flex flex-col gap-3">
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex flex-col gap-0.5">
@@ -871,7 +1032,7 @@ export default function LandingPage() {
               Ready to go <span className="text-neon-blue italic">Pro</span>?
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
-              Join over 1M creators and data archivists who trust AlgoTube Pro for their media pipeline.
+              Join over 1M creators and data archivists who trust AlgoTube for their media pipeline.
             </p>
             <div className="flex flex-col md:flex-row justify-center gap-4">
               <button className="bg-white text-background px-12 py-5 rounded-full font-label-md text-label-md hover:shadow-xl transition-all font-bold cursor-pointer">
@@ -889,8 +1050,8 @@ export default function LandingPage() {
       <footer className="w-full py-8 mt-auto bg-surface-container-lowest border-t border-white/5">
         <div className="max-w-max-width mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="font-label-md text-label-md text-neon-blue">AlgoTube Pro</span>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">© 2024 AlgoTube Pro. Neural-Link Enabled.</p>
+            <span className="font-label-md text-label-md text-neon-blue">AlgoTube</span>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">© 2024 AlgoTube. Neural-Link Enabled.</p>
           </div>
           
           <div className="flex gap-8">

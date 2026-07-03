@@ -74,14 +74,14 @@ export const downloadAudio = async (req, res, next) => {
 
 export const downloadPlaylist = async (req, res, next) => {
   try {
-    const { url, quality, socketId, selectedItems } = req.body;
+    const { url, quality, format, downloadMode, socketId, selectedItems } = req.body;
     if (!url) {
       return res.status(400).json({ success: false, message: 'URL is required.' });
     }
 
     const io = req.app.get('io');
 
-    startPlaylistDownload(url, quality, socketId, io, selectedItems).catch((err) => {
+    startPlaylistDownload(url, quality, format, downloadMode, socketId, io, selectedItems).catch((err) => {
       console.error(`Background playlist download failed: ${err.message}`);
     });
 
@@ -97,14 +97,14 @@ export const downloadPlaylist = async (req, res, next) => {
 
 export const downloadChannel = async (req, res, next) => {
   try {
-    const { url, quality, socketId, selectedItems } = req.body;
+    const { url, quality, format, downloadMode, socketId, selectedItems } = req.body;
     if (!url) {
       return res.status(400).json({ success: false, message: 'URL is required.' });
     }
 
     const io = req.app.get('io');
 
-    startChannelDownload(url, quality, socketId, io, selectedItems).catch((err) => {
+    startChannelDownload(url, quality, format, downloadMode, socketId, io, selectedItems).catch((err) => {
       console.error(`Background channel download failed: ${err.message}`);
     });
 
