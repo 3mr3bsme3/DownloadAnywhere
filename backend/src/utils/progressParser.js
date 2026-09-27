@@ -50,9 +50,10 @@ export const parseProgress = (line) => {
   // e.g. "[download] Destination: C:\Users\ASUS GAMING\Downloads\video.mp4"
   if (line.includes('[download] Destination:')) {
     const filePath = line.substring(line.indexOf('Destination:') + 12).trim();
-    const filename = filePath.split(/[\\/]/).pop().replace(/^"|"$/g, '');
+    const filename = filePath.split(/[/\\]/).pop().replace(/^"|"$/g, '');
     return {
       type: 'destination',
+      rawPath: filePath,    // full path, used by service to extract subfolder
       filename
     };
   }
@@ -61,9 +62,10 @@ export const parseProgress = (line) => {
   // e.g. "[download] C:\Users\ASUS GAMING\Downloads\video.mp4 has already been downloaded"
   if (line.includes('has already been downloaded') && line.includes('[download]')) {
     const cleanLine = line.replace('[download]', '').replace('has already been downloaded', '').trim();
-    const filename = cleanLine.split(/[\\/]/).pop().replace(/^"|"$/g, '');
+    const filename = cleanLine.split(/[/\\]/).pop().replace(/^"|"$/g, '');
     return {
       type: 'destination',
+      rawPath: cleanLine,
       filename
     };
   }

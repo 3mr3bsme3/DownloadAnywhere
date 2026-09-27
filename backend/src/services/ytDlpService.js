@@ -3,6 +3,7 @@ import path from 'path';
 import { parseProgress } from '../utils/progressParser.js';
 
 const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || 'C:\\Users\\ASUS GAMING\\Downloads';
+const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
 
 /**
  * Normalizes YouTube channel URLs to target the '/videos' tab,
@@ -43,10 +44,11 @@ export const normalizeChannelUrl = (urlStr) => {
 const runYtDlp = (args, socketId, io, jobType) => {
   return new Promise((resolve, reject) => {
     const finalArgs = ['--js-runtimes', 'node', ...args];
-    console.log(`[Service] Spawning: yt-dlp ${finalArgs.join(' ')}`);
+    console.log(`[Service] Spawning: ${YT_DLP_PATH} ${finalArgs.join(' ')}`);
     
-    const child = spawn('yt-dlp', finalArgs, { env: process.env });
+    const child = spawn(YT_DLP_PATH, finalArgs, { env: process.env });
     let currentFilename = '';
+    let folderName = '';    // tracks subfolder for playlist/channel jobs
     let stdoutBuffer = '';
     let stderrBuffer = '';
 
@@ -63,6 +65,13 @@ const runYtDlp = (args, socketId, io, jobType) => {
         if (parsed) {
           if (parsed.type === 'destination') {
             currentFilename = parsed.filename;
+            // For playlist/channel jobs, extract the subfolder from the raw path
+            if (jobType === 'playlist' || jobType === 'channel') {
+              const rawPath = parsed.rawPath || '';
+              const relPath = rawPath.replace(DOWNLOAD_DIR, '').replace(/^[\/\\]+/, '');
+              const parts = relPath.split(/[\/\\]/);
+              if (parts.length >= 2) folderName = parts[0];
+            }
             io.to(socketId).emit('download-status', {
               jobType,
               status: 'downloading',
@@ -123,7 +132,8 @@ const runYtDlp = (args, socketId, io, jobType) => {
           jobType,
           success: true,
           message: 'Download completed successfully!',
-          filename: currentFilename
+          filename: currentFilename,
+          folderName: folderName || null   // non-null for playlist/channel jobs
         });
         resolve();
       } else {
@@ -202,7 +212,7 @@ export const fetchPlaylistInfo = (url) => {
   return new Promise((resolve, reject) => {
     console.log(`[Service] Fetching playlist metadata for: ${targetUrl}`);
     
-    const child = spawn('yt-dlp', [
+    const child = spawn(YT_DLP_PATH, [
       '--js-runtimes', 'node',
       '--dump-single-json',
       '--flat-playlist',

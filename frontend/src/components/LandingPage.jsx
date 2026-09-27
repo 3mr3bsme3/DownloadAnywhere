@@ -40,7 +40,8 @@ export default function LandingPage() {
   // 1. WebSocket setup & canvas animations
   useEffect(() => {
     // Connect to backend Socket.IO
-    const socketClient = io('http://localhost:5000', {
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    const socketClient = io(BACKEND_URL, {
       withCredentials: true
     });
 
@@ -74,6 +75,28 @@ export default function LandingPage() {
       setDownloadStatus(null);
       setUrl(''); // clear input on success
       setPlaylistInfo(null); // clear preview
+
+      // Trigger a browser download — fetch the file from the backend
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const isPlaylistJob = data.jobType === 'playlist' || data.jobType === 'channel';
+
+      if (isPlaylistJob && data.folderName) {
+        // Playlist/channel: download a ZIP of the subfolder
+        const a = document.createElement('a');
+        a.href = `${BACKEND_URL}/api/download/zip?folder=${encodeURIComponent(data.folderName)}`;
+        a.download = `${data.folderName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else if (data.filename) {
+        // Single video or audio: stream file directly
+        const a = document.createElement('a');
+        a.href = `${BACKEND_URL}/api/download/file?filename=${encodeURIComponent(data.filename)}`;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     });
 
     socketClient.on('download-error', (data) => {
@@ -257,7 +280,7 @@ export default function LandingPage() {
     setFetchingInfo(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/download/playlist-info`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/download/playlist-info`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -335,7 +358,7 @@ export default function LandingPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/download/${downloadType}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'}/api/download/${downloadType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
