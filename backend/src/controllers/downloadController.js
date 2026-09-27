@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import { 
   startVideoDownload, 
   startAudioDownload, 
@@ -112,6 +114,39 @@ export const downloadChannel = async (req, res, next) => {
       success: true, 
       message: 'Channel download started.',
       socketId 
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR || 'C:\\Users\\ASUS GAMING\\Downloads';
+
+export const serveFile = (req, res, next) => {
+  try {
+    const { filename } = req.query;
+
+    if (!filename) {
+      return res.status(400).json({ success: false, message: 'filename query parameter is required.' });
+    }
+
+    // Resolve the absolute path and ensure it stays inside DOWNLOAD_DIR
+    const resolvedDir = path.resolve(DOWNLOAD_DIR);
+    const filePath = path.resolve(resolvedDir, filename);
+
+    if (!filePath.startsWith(resolvedDir + path.sep) && filePath !== resolvedDir) {
+      return res.status(403).json({ success: false, message: 'Access denied.' });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: 'File not found.' });
+    }
+
+    // Let the browser trigger a Save-As dialog with the original filename
+    res.download(filePath, path.basename(filePath), (err) => {
+      if (err && !res.headersSent) {
+        next(err);
+      }
     });
   } catch (err) {
     next(err);
