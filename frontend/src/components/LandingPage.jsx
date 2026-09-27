@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
+import logo from '../assets/Logo2.png';
 
 export default function LandingPage() {
   const canvasRef = useRef(null);
@@ -365,7 +366,7 @@ export default function LandingPage() {
         <div className="max-w-max-width mx-auto px-margin-desktop h-16 flex justify-between items-center">
           <div className="flex items-center gap-8">
             <span className="font-headline-lg text-headline-lg font-bold bg-gradient-to-r from-neon-blue to-aurora-cyan bg-clip-text text-transparent">
-              AlgoTube
+              DownloadAnywhere
             </span>
             <div className="hidden md:flex gap-6 items-center">
               <a 
@@ -427,9 +428,9 @@ export default function LandingPage() {
           <div className="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto w-full">
             <div className="mb-4 relative animate-float-3d">
               <img 
-                alt="AlgoTube 3D Logo" 
+                alt="DownloadAnywhere 3D Logo" 
                 className="w-48 md:w-56 h-auto drop-shadow-[0_0_50px_rgba(56,189,248,0.5)]" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMOaBLakzUSEtRPSCqINFiwgXL9qsaBU-TE7TTttfOxRMxW3zb444YYVq-kxV8mq4P8h_VXFttb3JCYO0zejFKS3gJdPa7xme5dOGPJZ-EG9R7cH2KEgQEh80RX3Opb4DF4c8t-0n1FWEr2ZGqOz7CVSyAAjiEYF6kiwkpGAlUMNxMuWok9kAcRRc_WNG7U_hnN3UE16LQIGpiaQBX2CIjcHEtuRZlfAtZdYNae0o_G-P23bJ5MJJ2j6Rn-ubSsLIEBgGaLZWVivceWg"
+                src={logo}
               />
             </div>
             
@@ -1032,7 +1033,7 @@ export default function LandingPage() {
               Ready to go <span className="text-neon-blue italic">Pro</span>?
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-12">
-              Join over 1M creators and data archivists who trust AlgoTube for their media pipeline.
+              Join over 1M creators and data archivists who trust DownloadAnywhere for their media pipeline.
             </p>
             <div className="flex flex-col md:flex-row justify-center gap-4">
               <button className="bg-white text-background px-12 py-5 rounded-full font-label-md text-label-md hover:shadow-xl transition-all font-bold cursor-pointer">
@@ -1050,8 +1051,8 @@ export default function LandingPage() {
       <footer className="w-full py-8 mt-auto bg-surface-container-lowest border-t border-white/5">
         <div className="max-w-max-width mx-auto px-margin-desktop flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="font-label-md text-label-md text-neon-blue">AlgoTube</span>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">© 2024 AlgoTube. Neural-Link Enabled.</p>
+            <span className="font-label-md text-label-md text-neon-blue">DownloadAnywhere</span>
+            <p className="font-body-sm text-body-sm text-on-surface-variant">© 2024 DownloadAnywhere. Neural-Link Enabled.</p>
           </div>
           
           <div className="flex gap-8">

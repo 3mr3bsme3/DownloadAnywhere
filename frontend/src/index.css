@@ -69,13 +69,13 @@
   --spacing-margin-mobile: 16px;
 
   /* Premium UI Matching Fonts */
-  --font-body-lg: "Inter", sans-serif;
-  --font-headline-xl: "Geist", sans-serif;
-  --font-headline-lg-mobile: "Geist", sans-serif;
-  --font-body-sm: "Inter", sans-serif;
-  --font-body-md: "Inter", sans-serif;
-  --font-label-md: "Geist", sans-serif;
-  --font-headline-lg: "Geist", sans-serif;
+  --font-body-lg: "Outfit", sans-serif;
+  --font-headline-xl: "Orbitron", sans-serif;
+  --font-headline-lg-mobile: "Orbitron", sans-serif;
+  --font-body-sm: "Outfit", sans-serif;
+  --font-body-md: "Outfit", sans-serif;
+  --font-label-md: "Orbitron", sans-serif;
+  --font-headline-lg: "Orbitron", sans-serif;
   --font-mono-code: monospace;
 }
 
