@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [quality, setQuality] = useState('1080');
   const [audioFormat, setAudioFormat] = useState('mp3');
   const [playlistMode, setPlaylistMode] = useState('video'); // video or audio
+  const [downloadDir, setDownloadDir] = useState('');
   
   // Playlist video listing states
   const [playlistInfo, setPlaylistInfo] = useState(null);
@@ -313,7 +314,8 @@ export default function LandingPage() {
 
     const payload = {
       url,
-      socketId: socket ? socket.id : null
+      socketId: socket ? socket.id : null,
+      downloadDir: downloadDir.trim() || undefined
     };
 
     if (downloadType === 'audio') {
@@ -785,7 +787,37 @@ export default function LandingPage() {
                     </div>
                   )}
 
-                  <div className="flex items-end justify-end">
+                  {/* Download Directory Selector */}
+                  <div className="flex flex-col gap-2 sm:col-span-2">
+                    <label className="text-on-surface-variant text-[13px] font-label-md flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-neon-blue">folder_open</span>
+                      SAVE DIRECTORY
+                      <span className="text-outline-variant text-[11px] ml-1">(optional — leave blank for default Downloads folder)</span>
+                    </label>
+                    <div className="relative flex items-center bg-surface-container-low/60 rounded-xl border border-white/10 p-2 pl-4 focus-within:border-neon-blue/60 transition-all">
+                      <span className="material-symbols-outlined text-neon-blue mr-2 text-[20px]">folder</span>
+                      <input
+                        type="text"
+                        disabled={isDownloading}
+                        value={downloadDir}
+                        onChange={(e) => setDownloadDir(e.target.value)}
+                        placeholder="e.g. C:\Users\YourName\Videos"
+                        className="bg-transparent border-none focus:ring-0 text-white w-full font-body-md placeholder:text-outline-variant outline-none py-2 text-[15px]"
+                      />
+                      {downloadDir && (
+                        <button
+                          type="button"
+                          onClick={() => setDownloadDir('')}
+                          className="text-outline-variant hover:text-white transition-colors mr-2 shrink-0"
+                          title="Clear directory"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-end justify-end sm:col-span-2">
                     <button
                       ref={magButtonRef}
                       type="submit"

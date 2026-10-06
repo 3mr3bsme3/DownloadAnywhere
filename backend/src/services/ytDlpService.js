@@ -152,15 +152,17 @@ const runYtDlp = (args, socketId, io, jobType) => {
 /**
  * Download a single video.
  */
-export const startVideoDownload = async (url, quality = '1080', socketId, io) => {
+export const startVideoDownload = async (url, quality = '1080', socketId, io, downloadDir) => {
   const heightLimit = parseInt(quality, 10) || 1080;
+  const saveDir = downloadDir || DOWNLOAD_DIR;
   
   // Format query: best video matching size + best audio, or best unified download matching quality
-  const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
-  const outputPattern = path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s');
+  const formatStr = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+  const outputPattern = path.join(saveDir, '%(title)s.%(ext)s');
 
   const args = [
     '-f', formatStr,
+    '--merge-output-format', 'mp4',
     '-o', outputPattern,
     url
   ];
@@ -171,9 +173,10 @@ export const startVideoDownload = async (url, quality = '1080', socketId, io) =>
 /**
  * Download audio only.
  */
-export const startAudioDownload = async (url, format = 'mp3', socketId, io) => {
+export const startAudioDownload = async (url, format = 'mp3', socketId, io, downloadDir) => {
   const audioFormat = format.toLowerCase();
-  const outputPattern = path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s');
+  const saveDir = downloadDir || DOWNLOAD_DIR;
+  const outputPattern = path.join(saveDir, '%(title)s.%(ext)s');
 
   // Embed artwork for formats that support it (mp3, m4a, flac, opus, alac)
   const formatsSupportingThumbnail = ['mp3', 'm4a', 'flac', 'opus', 'alac'];
@@ -262,8 +265,9 @@ export const fetchPlaylistInfo = (url) => {
 /**
  * Download an entire or filtered playlist (Video or Audio).
  */
-export const startPlaylistDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '') => {
-  const outputPattern = path.join(DOWNLOAD_DIR, '%(playlist)s', '%(playlist_index)s - %(title)s.%(ext)s');
+export const startPlaylistDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '', downloadDir) => {
+  const saveDir = downloadDir || DOWNLOAD_DIR;
+  const outputPattern = path.join(saveDir, '%(playlist)s', '%(playlist_index)s - %(title)s.%(ext)s');
   let args = [];
 
   if (downloadMode === 'audio') {
@@ -283,9 +287,10 @@ export const startPlaylistDownload = async (url, quality = '1080', format = 'mp3
     }
   } else {
     const heightLimit = parseInt(quality, 10) || 1080;
-    const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+    const formatStr = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
     args = [
       '-f', formatStr,
+      '--merge-output-format', 'mp4',
       '-o', outputPattern,
       '--yes-playlist'
     ];
@@ -303,9 +308,10 @@ export const startPlaylistDownload = async (url, quality = '1080', format = 'mp3
 /**
  * Download all or filtered videos from a channel (Video or Audio).
  */
-export const startChannelDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '') => {
+export const startChannelDownload = async (url, quality = '1080', format = 'mp3', downloadMode = 'video', socketId, io, selectedItems = '', downloadDir) => {
   const targetUrl = normalizeChannelUrl(url);
-  const outputPattern = path.join(DOWNLOAD_DIR, '%(channel)s', '%(title)s.%(ext)s');
+  const saveDir = downloadDir || DOWNLOAD_DIR;
+  const outputPattern = path.join(saveDir, '%(channel)s', '%(title)s.%(ext)s');
   let args = [];
 
   if (downloadMode === 'audio') {
@@ -324,9 +330,10 @@ export const startChannelDownload = async (url, quality = '1080', format = 'mp3'
     }
   } else {
     const heightLimit = parseInt(quality, 10) || 1080;
-    const formatStr = `bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
+    const formatStr = `bestvideo[height<=${heightLimit}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${heightLimit}]+bestaudio/best[height<=${heightLimit}]`;
     args = [
       '-f', formatStr,
+      '--merge-output-format', 'mp4',
       '-o', outputPattern
     ];
   }
